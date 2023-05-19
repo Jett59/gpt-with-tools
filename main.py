@@ -1,7 +1,7 @@
 import os
 from chat import Model
-from chat import ChatSession
+from agent import Agent
 
 model = Model("gpt-3.5-turbo", 0, os.environ["OPENAI_KEY"])
-chat = ChatSession(model, "You are an assistant.")
-print(chat("Hello there!"))
+agent = Agent(model, [])
+print(agent("Hi there!"))
