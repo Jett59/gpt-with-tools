@@ -3,5 +3,5 @@ from chat import Model
 from chat import ChatSession
 
 model = Model("gpt-3.5-turbo", 0, os.environ["OPENAI_KEY"])
-chat = ChatSession(model)
+chat = ChatSession(model, "You are an assistant.")
 print(chat("Hello there!"))

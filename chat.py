@@ -30,9 +30,9 @@ class Model:
 
 
 class ChatSession:
-    def __init__(self, model):
+    def __init__(self, model, system_prompt):
         self.model = model
-        self.messages = []
+        self.messages = [ChatMessage("system", system_prompt)]
 
     def __call__(self, message: str):
         self.messages.append(ChatMessage("user", message))
