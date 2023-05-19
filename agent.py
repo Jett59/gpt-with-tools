@@ -31,17 +31,17 @@ class Agent:
             ```
         """
         if len(tools) != 0:
-            system_prompt += (
-                "\nThe following tools are available for the user:\n"
-            )
+            system_prompt += "\nThe following tools are available for the user:\n"
             for tool in tools:
                 system_prompt += f"    - '{tool.name}': {tool.description}\n"
-            system_prompt += "You must use the tool if the user requests information from it."
+            system_prompt += (
+                "You must use the tool if the user requests information from it."
+            )
         self.chat = ChatSession(model, system_prompt)
 
     def __call__(self, user_input: str) -> str:
         response = self.chat(
-            f"```user\n{user_input}\n```\nYour response should begin with the markdown tags (```json)"
+            f"```user\n{user_input}\n```\nYour response should begin with the markdown tags (```json and end with the ``` close)"
         )
         if not response.startswith("```json\n"):
             raise ValueError(f"Response {response} does not start with ```json\n.")
@@ -65,5 +65,21 @@ class Agent:
             for tool in self.tools:
                 if tool.name == action:
                     print("Running tool")
-                    return self(f"Tool response:\n```\n{tool.function(input)}\n```")
+                    try:
+                        tool_response = tool.function(input)
+                    except Exception as e:
+                        return self(
+                            f"An error occurred while running the tool:\n```\n{e}\n```"
+                        )
+                    if isinstance(tool_response, str):
+                        formatted_tool_response = f"```\n{tool_response}\n```"
+                    elif isinstance(tool_response, list) or isinstance(
+                        tool_response, dict
+                    ):
+                        formatted_tool_response = f"Tool response:\n```json\n{json.dumps(tool_response, indent=4)}\n```"
+                    else:
+                        raise ValueError(
+                            f"Tool response {tool_response} is not a string, list or dictionary."
+                        )
+                    return self(formatted_tool_response)
             raise ValueError(f"Unknown action: {action}")
