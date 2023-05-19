@@ -19,29 +19,29 @@ class Agent:
             Responses must conform to one of the following formats (including the markdown tags). The chat will be terminated upon any non-conformant messages.
             1. ```json
             {
-                "action": "Final response",
+                "action": "final response",
                 "input": [the final response to the user's request, which must answer the original question]
             }
             ```
             2. ```json
             {
-                "action": [the name of the tool you are requesting the user use],
+                "action": [the name of the tool you are requesting the user use, which must be one of the list below],
                 "input": [the input to the tool (leave empty if no input is required)]
             }
             ```
+
+            After a final response message, the user will be required to give another prompt.
         """
         if len(tools) != 0:
             system_prompt += "\nThe following tools are available for the user:\n"
             for tool in tools:
                 system_prompt += f"    - '{tool.name}': {tool.description}\n"
-            system_prompt += (
-                "You must use the tool if the user requests information from it."
-            )
+            system_prompt += "You must not try to use a tool not listed here."
         self.chat = ChatSession(model, system_prompt)
 
     def __call__(self, user_input: str) -> str:
         response = self.chat(
-            f"```user\n{user_input}\n```\nYour response should begin with the markdown tags (```json and end with the ``` close)"
+            f"```user\n{user_input}\n```\nYour response must begin with ```json and end with ```."
         )
         if not response.startswith("```json\n"):
             raise ValueError(f"Response {response} does not start with ```json\n.")
@@ -59,7 +59,7 @@ class Agent:
             raise ValueError(f"Response {response} does not contain an input.")
         action = response["action"]
         input = response["input"]
-        if action == "Final response":
+        if action == "final response":
             return input
         else:
             for tool in self.tools:

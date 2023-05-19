@@ -26,11 +26,20 @@ class Model:
                 ],
             },
         )
-        return response.json()["choices"][0]["message"]["content"]
+        response = response.json()
+        if "choices" not in response:
+            raise ValueError(f"Response {response} does not contain choices.")
+        if len(response["choices"]) != 1:
+            raise ValueError(f"Response {response} contains more than one choice.")
+        if "message" not in response["choices"][0]:
+            raise ValueError(f"Response {response} does not contain a message.")
+        if "content" not in response["choices"][0]["message"]:
+            raise ValueError(f"Response {response} does not contain content.")
+        return response["choices"][0]["message"]["content"]
 
 
 class ChatSession:
-    def __init__(self, model, system_prompt):
+    def __init__(self, model: Model, system_prompt: str):
         self.model = model
         self.chat_messages = [ChatMessage("system", system_prompt)]
 
