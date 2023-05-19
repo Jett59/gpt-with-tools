@@ -15,14 +15,8 @@ class Tool:
 class Agent:
     def __init__(self, model: Model, tools: list[Tool]):
         self.tools = tools
-        if len(tools) == 0:
-            system_prompt = "You are a helpful assistant."
-        else:
-            system_prompt = "You are a helpful assistant. You may request the following actions from the user:\n"
-            for tool in tools:
-                system_prompt += f"- {tool.name}: {tool.description}\n"
-        system_prompt += """
-            There are two formats for your response, both of which are formatted in markdown:
+        system_prompt = """
+            Responses must conform to one of the following formats (including the markdown tags). The chat will be terminated upon any non-conformant messages.
             1. ```json
             {
                 "action": "Final response",
@@ -31,16 +25,23 @@ class Agent:
             ```
             2. ```json
             {
-                "action": [the name of the action you are requesting from the user],
-                "input": [the input to the action]
+                "action": [the name of the tool you are requesting the user use],
+                "input": [the input to the tool (leave empty if no input is required)]
             }
             ```
         """
+        if len(tools) != 0:
+            system_prompt += (
+                "\nThe following tools are available for the user:\n"
+            )
+            for tool in tools:
+                system_prompt += f"    - {tool.name}: {tool.description}\n"
+            system_prompt += "You must use the tool if the user requests information from it."
         self.chat = ChatSession(model, system_prompt)
 
     def __call__(self, user_input: str) -> str:
         response = self.chat(
-            f"Don't forget to respond in the specified format. The user's message follows:\n{user_input}"
+            f"```user\n{user_input}\n```\nYour response should begin with the markdown tags (```json)"
         )
         if not response.startswith("```json\n"):
             raise ValueError(f"Response {response} does not start with ```json\n.")
@@ -63,5 +64,6 @@ class Agent:
         else:
             for tool in self.tools:
                 if tool.name == action:
-                    return tool.function(input)
+                    print("Running tool")
+                    return self(f"Tool response:\n```\n{tool.function(input)}\n```")
             raise ValueError(f"Unknown action: {action}")
