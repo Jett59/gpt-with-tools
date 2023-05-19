@@ -20,7 +20,7 @@ class Agent:
             1. ```json
             {
                 "action": "Final response",
-                "input": [the final response to the user's request]
+                "input": [the final response to the user's request, which must answer the original question]
             }
             ```
             2. ```json
@@ -35,7 +35,7 @@ class Agent:
                 "\nThe following tools are available for the user:\n"
             )
             for tool in tools:
-                system_prompt += f"    - {tool.name}: {tool.description}\n"
+                system_prompt += f"    - '{tool.name}': {tool.description}\n"
             system_prompt += "You must use the tool if the user requests information from it."
         self.chat = ChatSession(model, system_prompt)
 

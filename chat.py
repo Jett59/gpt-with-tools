@@ -32,14 +32,10 @@ class Model:
 class ChatSession:
     def __init__(self, model, system_prompt):
         self.model = model
-        self.system_message = ChatMessage("system", system_prompt)
-        self.chat_messages = []
+        self.chat_messages = [ChatMessage("system", system_prompt)]
 
     def __call__(self, message: str):
-        temp_messages = self.chat_messages.copy()
-        temp_messages.append(self.system_message)
-        temp_messages.append(ChatMessage("user", message))
-        response = self.model(temp_messages)
         self.chat_messages.append(ChatMessage("user", message))
+        response = self.model(self.chat_messages)
         self.chat_messages.append(ChatMessage("assistant", response))
         return response

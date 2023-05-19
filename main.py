@@ -5,7 +5,7 @@ from agent import Tool
 
 
 def list_directory(directory):
-    return "Documents Downloads code"
+    return "Documents code"
 
 
 model = Model("gpt-3.5-turbo", 0, os.environ["OPENAI_KEY"])
