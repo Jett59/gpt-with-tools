@@ -26,4 +26,16 @@ class Model:
                 ],
             },
         )
-        print(response.text)
+        return response.json()["choices"][0]["message"]["content"]
+
+
+class ChatSession:
+    def __init__(self, model):
+        self.model = model
+        self.messages = []
+
+    def __call__(self, message: str):
+        self.messages.append(ChatMessage("user", message))
+        response = self.model(self.messages)
+        self.messages.append(ChatMessage("assistant", response))
+        return response
