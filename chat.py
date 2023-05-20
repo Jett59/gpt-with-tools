@@ -39,12 +39,24 @@ class Model:
 
 
 class ChatSession:
-    def __init__(self, model: Model, system_prompt: str):
+    def __init__(self, model: Model, system_prompt: str, memory_length: int):
         self.model = model
-        self.chat_messages = [ChatMessage("system", system_prompt)]
+        self.system_prompt = system_prompt
+        self.chat_messages = []
+        self.memory_length = memory_length
 
-    def __call__(self, message: str):
+    def prune_messages(self):
+        if self.memory_length > 0 and len(self.chat_messages) > self.memory_length:
+            self.chat_messages = self.chat_messages[-self.memory_length :]
+        elif self.memory_length == 0:
+            self.chat_messages = []
+
+    def __call__(self, message: str, prune_messages: bool = True):
         self.chat_messages.append(ChatMessage("user", message))
-        response = self.model(self.chat_messages)
+        final_chat_messages = [ChatMessage("system", self.system_prompt)]
+        final_chat_messages.extend(self.chat_messages)
+        response = self.model(final_chat_messages)
         self.chat_messages.append(ChatMessage("assistant", response))
+        if prune_messages:
+            self.prune_messages()
         return response

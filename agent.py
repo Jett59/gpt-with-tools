@@ -13,7 +13,7 @@ class Tool:
 
 
 class Agent:
-    def __init__(self, model: Model, tools: list[Tool]):
+    def __init__(self, model: Model, tools: list[Tool], memory_length: int = 0):
         self.tools = tools
         system_prompt = """
             Responses must conform to one of the following formats (including the markdown tags). The chat will be terminated upon any non-conformant messages.
@@ -35,16 +35,17 @@ class Agent:
         if len(tools) != 0:
             system_prompt += "\nThe following tools are available for the user:\n"
             for tool in tools:
-                        system_prompt += f"    - '{tool.name}': {tool.description}\n"
+                system_prompt += f"    - '{tool.name}': {tool.description}\n"
             system_prompt += "You must not try to use a tool not listed here."
-        self.chat = ChatSession(model, system_prompt)
+        self.chat = ChatSession(model, system_prompt, memory_length)
 
     def __call__(self, user_input: str, depth=0) -> str:
         if depth > 32:
             return "Looks like we got confused. Can you try something else?"
 
         response = self.chat(
-            f"```user\n{user_input}\n```\nYour response must begin with ```json and end with ```."
+            f"```user\n{user_input}\n```\nYour response must begin with ```json and end with ```.",
+            False,
         )
         if not response.startswith("```json\n"):
             raise ValueError(f"Response {response} does not start with ```json\n.")
@@ -63,6 +64,8 @@ class Agent:
         action = response["action"]
         input = response["input"]
         if action == "final response":
+            # We do it manually here to avoid losing the messages from the tool responses.
+            self.chat.prune_messages()
             return input
         else:
             for tool in self.tools:
@@ -73,10 +76,12 @@ class Agent:
                     except Exception as e:
                         return self(
                             f"An error occurred while running the tool:\n```\n{e}\n```",
-                            depth=depth + 1
+                            depth=depth + 1,
                         )
                     if isinstance(tool_response, str):
-                        formatted_tool_response = f"Tool response:\n```{tool_response}```\n"
+                        formatted_tool_response = (
+                            f"Tool response:\n```{tool_response}```\n"
+                        )
                     elif isinstance(tool_response, list) or isinstance(
                         tool_response, dict
                     ):

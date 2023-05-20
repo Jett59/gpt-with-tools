@@ -15,8 +15,9 @@ agent = Agent(
     [
         Tool(
             "list directory", "List the contents of the given directory", list_directory
-        )
+        ),
     ],
+    0,
 )
 
 while True:
