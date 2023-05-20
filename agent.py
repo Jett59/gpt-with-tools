@@ -70,12 +70,12 @@ class Agent:
         else:
             for tool in self.tools:
                 if tool.name == action:
-                    print("Running tool")
+                    print(f"Running {action}('{input}')")
                     try:
                         tool_response = tool.function(input)
                     except Exception as e:
                         return self(
-                            f"An error occurred while running the tool:\n```\n{e}\n```",
+                            f"An error occurred while running {action}:\n```\n{e}\n```",
                             depth=depth + 1,
                         )
                     if isinstance(tool_response, str):
