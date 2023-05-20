@@ -35,11 +35,14 @@ class Agent:
         if len(tools) != 0:
             system_prompt += "\nThe following tools are available for the user:\n"
             for tool in tools:
-                system_prompt += f"    - '{tool.name}': {tool.description}\n"
+                        system_prompt += f"    - '{tool.name}': {tool.description}\n"
             system_prompt += "You must not try to use a tool not listed here."
         self.chat = ChatSession(model, system_prompt)
 
-    def __call__(self, user_input: str) -> str:
+    def __call__(self, user_input: str, depth=0) -> str:
+        if depth > 32:
+            return "Looks like we got confused. Can you try something else?"
+
         response = self.chat(
             f"```user\n{user_input}\n```\nYour response must begin with ```json and end with ```."
         )
@@ -69,10 +72,11 @@ class Agent:
                         tool_response = tool.function(input)
                     except Exception as e:
                         return self(
-                            f"An error occurred while running the tool:\n```\n{e}\n```"
+                            f"An error occurred while running the tool:\n```\n{e}\n```",
+                            depth=depth + 1
                         )
                     if isinstance(tool_response, str):
-                        formatted_tool_response = f"```\n{tool_response}\n```"
+                        formatted_tool_response = f"Tool response:\n```{tool_response}```\n"
                     elif isinstance(tool_response, list) or isinstance(
                         tool_response, dict
                     ):
@@ -81,5 +85,5 @@ class Agent:
                         raise ValueError(
                             f"Tool response {tool_response} is not a string, list or dictionary."
                         )
-                    return self(formatted_tool_response)
+                    return self(formatted_tool_response, depth=depth + 1)
             raise ValueError(f"Unknown action: {action}")
