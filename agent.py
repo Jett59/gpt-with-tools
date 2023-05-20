@@ -6,11 +6,15 @@ from chat import Model
 
 
 class Tool:
-    def __init__(self, name: str, description: str, function: Callable[[str], str]):
+    def __init__(self, name: str, description: str, function: Callable[[str], str or dict or list]):
         self.name = name
         self.description = description
-        self.function = function
+        self.__inner_function = function
+        self.invocation_count = 0
 
+    def run(self, input: str):
+        self.invocation_count += 1
+        return self.__inner_function(input)
 
 class Agent:
     def __init__(self, model: Model, tools: list[Tool], memory_length: int = 0):
@@ -72,7 +76,7 @@ class Agent:
                 if tool.name == action:
                     print(f"Running {action}('{input}')")
                     try:
-                        tool_response = tool.function(input)
+                        tool_response = tool.run(input)
                     except Exception as e:
                         return self(
                             f"An error occurred while running {action}:\n```\n{e}\n```",
