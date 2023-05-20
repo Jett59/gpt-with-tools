@@ -79,12 +79,14 @@ class Agent:
                             depth=depth + 1,
                         )
                     if isinstance(tool_response, str):
+                        print(f"-> {tool_response}")
                         formatted_tool_response = (
                             f"Tool response:\n```{tool_response}```\n"
                         )
                     elif isinstance(tool_response, list) or isinstance(
                         tool_response, dict
                     ):
+                        print(f"-> {json.dumps(tool_response, indent=4)}")
                         formatted_tool_response = f"Tool response:\n```json\n{json.dumps(tool_response, indent=4)}\n```"
                     else:
                         raise ValueError(
